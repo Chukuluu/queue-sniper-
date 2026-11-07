@@ -1,0 +1,47 @@
+{
+  "server_id": "",
+  "channel_id": "",
+  "watch_servers": {},
+  "watch_channels": {},
+  "watch_threads": true,
+  "button_patterns": [
+    "enter\\s+(the\\s+)?wait\\s*-?\\s*list",
+    "join\\s+(the\\s+)?wait\\s*-?\\s*list",
+    "\\bwait\\s*-?\\s*list\\b",
+    "enter\\s+(the\\s+)?queue",
+    "join\\s+(the\\s+)?queue",
+    "queue\\s+(join|enter)",
+    "click\\s+(here\\s+)?to\\s+(join|enter)",
+    "join\\s+now"
+  ],
+  "deny_patterns": [
+    "\\bleave\\b",
+    "\\bexit\\b",
+    "\\bquit\\b",
+    "\\bcancel\\b",
+    "\\bremove\\b",
+    "\\bview\\b",
+    "\\bcheck\\b",
+    "\\b(wait\\s*-?\\s*list|queue)\\s*(info|status|stats)\\b"
+  ],
+  "match_custom_id": true,
+  "click_cooldown_seconds": 0.25,
+  "rearm_after_seconds": 0,
+  "retry_attempts": 2,
+  "retry_delay_ms": 120,
+  "dry_run": false,
+  "debug_components": false,
+  "raw_edit_fallback": true,
+  "keepalive_seconds": 20,
+  "boost_process": true,
+  "startup_sound": true,
+  "alarm": {
+    "enabled": true,
+    "repeat": 3,
+    "gap_seconds": 0.25,
+    "voice": true,
+    "voice_text": "Queue open. Go!",
+    "flash_taskbar": true
+  },
+  "log_to_file": true
+}
