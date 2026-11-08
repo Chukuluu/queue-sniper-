@@ -518,11 +518,13 @@
       var name = document.createElement("span");
       name.className = "server-name";
       name.textContent = server.name;
-      var meta = document.createElement("span");
-      meta.className = "server-meta";
-      meta.textContent = server.meta;
       info.appendChild(name);
-      info.appendChild(meta);
+      if (server.meta) {
+        var meta = document.createElement("span");
+        meta.className = "server-meta";
+        meta.textContent = server.meta;
+        info.appendChild(meta);
+      }
 
       var tag = document.createElement("span");
       tag.className = "tag " + server.tagClass;
@@ -536,7 +538,7 @@
       gear.innerHTML = '<svg class="icon"><use href="#i-gear" /></svg>';
       gear.addEventListener("click", function (event) {
         event.stopPropagation();
-        toast(server.name + ": " + server.meta);
+        toast(server.meta ? server.name + ": " + server.meta : server.name);
         log("info", "Opened settings for " + server.name);
       });
 
@@ -646,7 +648,7 @@
       tagClass: "tag-green",
       initials: initials,
       avatar: "linear-gradient(135deg, #22c55e, #0ea5e9)",
-      meta: "ID ••••" + channel.slice(-4),
+      meta: "",
       selected: true,
       custom: true
     });

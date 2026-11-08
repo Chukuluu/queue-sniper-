@@ -476,7 +476,7 @@ class DashboardService:
                     "tagClass": "tag-green",
                     "initials": initials_for(server_label),
                     "avatar": avatar_for(str(server_id) if server_id else key),
-                    "meta": f"ID {mask_id(key)}",
+                    "meta": "",
                     "selected": True,
                     "custom": False,
                 }
