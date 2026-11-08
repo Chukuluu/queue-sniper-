@@ -1,0 +1,394 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>App Dashboard — Queue Sniper</title>
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="components.css" />
+</head>
+<body>
+  <svg class="svg-sprite" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
+    <symbol id="i-logo" viewBox="0 0 24 24">
+      <circle cx="12" cy="12" r="7" />
+      <path d="M12 2v3M12 19v3M2 12h3M19 12h3" />
+      <circle cx="12" cy="12" r="2" fill="currentColor" stroke="none" />
+    </symbol>
+    <symbol id="i-bell" viewBox="0 0 24 24">
+      <path d="M18 15v-4a6 6 0 1 0-12 0v4l-2 3h16l-2-3Z" />
+      <path d="M10 21h4" />
+    </symbol>
+    <symbol id="i-help" viewBox="0 0 24 24">
+      <circle cx="12" cy="12" r="9" />
+      <path d="M9.6 9a2.5 2.5 0 1 1 3.9 2.1c-.9.6-1.5 1.1-1.5 2.4" />
+      <circle cx="12" cy="17" r=".6" fill="currentColor" stroke="none" />
+    </symbol>
+    <symbol id="i-globe" viewBox="0 0 24 24">
+      <circle cx="12" cy="12" r="9" />
+      <path d="M3 12h18M12 3c2.5 2.6 3.8 5.7 3.8 9S14.5 18.4 12 21c-2.5-2.6-3.8-5.7-3.8-9S9.5 5.6 12 3Z" />
+    </symbol>
+    <symbol id="i-chevron" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6" /></symbol>
+    <symbol id="i-min" viewBox="0 0 24 24"><path d="M5 12h14" /></symbol>
+    <symbol id="i-max" viewBox="0 0 24 24"><rect x="5" y="5" width="14" height="14" rx="1.5" /></symbol>
+    <symbol id="i-close" viewBox="0 0 24 24"><path d="m6 6 12 12M18 6 6 18" /></symbol>
+    <symbol id="i-play" viewBox="0 0 24 24"><path d="M8 5.5v13l11-6.5-11-6.5Z" fill="currentColor" stroke="none" /></symbol>
+    <symbol id="i-stop" viewBox="0 0 24 24"><rect x="6.5" y="6.5" width="11" height="11" rx="1" fill="currentColor" stroke="none" /></symbol>
+    <symbol id="i-gear" viewBox="0 0 24 24">
+      <circle cx="12" cy="12" r="3" />
+      <path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1-2.8 2.8-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.6v.2h-4v-.2a1.7 1.7 0 0 0-1-1.6 1.7 1.7 0 0 0-1.9.3l-.1.1L4.2 17l.1-.1a1.7 1.7 0 0 0 .3-1.9 1.7 1.7 0 0 0-1.6-1H2.8v-4H3a1.7 1.7 0 0 0 1.6-1 1.7 1.7 0 0 0-.3-1.9L4.2 7 7 4.2l.1.1a1.7 1.7 0 0 0 1.9.3A1.7 1.7 0 0 0 10 3V2.8h4V3a1.7 1.7 0 0 0 1 1.6 1.7 1.7 0 0 0 1.9-.3l.1-.1L19.8 7l-.1.1a1.7 1.7 0 0 0-.3 1.9 1.7 1.7 0 0 0 1.6 1h.2v4H21a1.7 1.7 0 0 0-1.6 1Z" />
+    </symbol>
+    <symbol id="i-rocket" viewBox="0 0 24 24">
+      <path d="M13.5 4.5c3.2-.6 5.4.4 5.7 5.5-2.4 4.8-6.5 7.4-10.5 8.5l-2.2-2.2c1-4 3.6-8.1 7-11.8Z" />
+      <path d="M8.5 15.5c-1.7.6-2.6 2.2-2.5 4.5 2.3.1 3.9-.8 4.5-2.5" />
+      <circle cx="15" cy="9" r="1.2" />
+    </symbol>
+    <symbol id="i-hourglass" viewBox="0 0 24 24">
+      <path d="M7 3h10M7 21h10M8 3v4l4 5 4-5V3M8 21v-4l4-5 4 5v4" />
+    </symbol>
+    <symbol id="i-shield" viewBox="0 0 24 24">
+      <path d="M12 3 5 6v6c0 4 3 7 7 9 4-2 7-5 7-9V6l-7-3Z" />
+      <path d="m9 12 2 2 4-4" />
+    </symbol>
+    <symbol id="i-sparkles" viewBox="0 0 24 24">
+      <path d="m12 3 1.6 4.4L18 9l-4.4 1.6L12 15l-1.6-4.4L6 9l4.4-1.6L12 3Z" />
+      <path d="m18.5 14 .8 2.2 2.2.8-2.2.8-.8 2.2-.8-2.2-2.2-.8 2.2-.8.8-2.2Z" />
+    </symbol>
+    <symbol id="i-arrow-left" viewBox="0 0 24 24"><path d="M19 12H5M11 18l-6-6 6-6" /></symbol>
+    <symbol id="i-arrow-right" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6" /></symbol>
+    <symbol id="i-upload" viewBox="0 0 24 24">
+      <path d="M12 16V4m0 0L7 9m5-5 5 5" />
+      <path d="M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3" />
+    </symbol>
+    <symbol id="i-copy" viewBox="0 0 24 24">
+      <rect x="9" y="9" width="11" height="11" rx="2" />
+      <path d="M5 15V6a2 2 0 0 1 2-2h9" />
+    </symbol>
+    <symbol id="i-bug" viewBox="0 0 24 24">
+      <rect x="8" y="8" width="8" height="10" rx="4" />
+      <path d="M12 8V5M9 5 7 3M15 5l2-2M8 11H4M20 11h-4M8 16H5M19 16h-3" />
+    </symbol>
+    <symbol id="i-volume" viewBox="0 0 24 24">
+      <path d="M4 9v6h4l5 4V5L8 9H4Z" />
+      <path d="M16 9a4 4 0 0 1 0 6M18.5 7a7 7 0 0 1 0 10" />
+    </symbol>
+    <symbol id="i-desktop" viewBox="0 0 24 24">
+      <rect x="3" y="4" width="18" height="12" rx="2" />
+      <path d="M8 20h8M12 16v4" />
+    </symbol>
+    <symbol id="i-sound" viewBox="0 0 24 24">
+      <path d="M9 18V6l10-2v12" />
+      <circle cx="6" cy="18" r="3" />
+      <circle cx="16" cy="16" r="3" />
+    </symbol>
+    <symbol id="i-webhook" viewBox="0 0 24 24">
+      <path d="M10 14a4 4 0 0 0 5.7 0l2.8-2.8a4 4 0 0 0-5.7-5.7L11 7.3" />
+      <path d="M14 10a4 4 0 0 0-5.7 0l-2.8 2.8a4 4 0 0 0 5.7 5.7l1.8-1.8" />
+    </symbol>
+    <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" /></symbol>
+    <symbol id="i-stats" viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-7M2 20h20" /></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><path d="m5 12 4 4L19 6" /></symbol>
+    <symbol id="i-eye" viewBox="0 0 24 24">
+      <path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6S2 12 2 12Z" />
+      <circle cx="12" cy="12" r="2.5" />
+    </symbol>
+    <symbol id="i-logout" viewBox="0 0 24 24">
+      <path d="M10 4H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h4" />
+      <path d="M15 8l4 4-4 4M19 12H9" />
+    </symbol>
+    <symbol id="i-server" viewBox="0 0 24 24">
+      <ellipse cx="12" cy="6" rx="7" ry="3" />
+      <path d="M5 6v6c0 1.7 3.1 3 7 3s7-1.3 7-3V6M5 12v6c0 1.7 3.1 3 7 3s7-1.3 7-3v-6" />
+    </symbol>
+    <symbol id="i-palette" viewBox="0 0 24 24">
+      <circle cx="12" cy="12" r="9" />
+      <circle cx="8" cy="10" r="1" fill="currentColor" stroke="none" />
+      <circle cx="12" cy="8" r="1" fill="currentColor" stroke="none" />
+      <circle cx="16" cy="10" r="1" fill="currentColor" stroke="none" />
+      <path d="M12 21a3 3 0 0 1 0-6h1a2 2 0 0 0 0-4" />
+    </symbol>
+    <symbol id="i-power" viewBox="0 0 24 24">
+      <path d="M12 3v9" />
+      <path d="M7.5 6.2a8 8 0 1 0 9 0" />
+    </symbol>
+  </svg>
+
+  <div class="window" id="appWindow">
+    <div class="titlebar">
+      <div class="traffic-lights">
+        <button class="light red" id="redLight" title="Close" aria-label="Close"></button>
+        <button class="light yellow" id="yellowLight" title="Minimize" aria-label="Minimize"></button>
+        <button class="light green" id="greenLight" title="Maximize" aria-label="Maximize"></button>
+      </div>
+      <div class="titlebar-title">App Dashboard</div>
+      <div class="window-controls">
+        <button class="icon-btn" id="minBtn" title="Minimize" aria-label="Minimize"><svg class="icon"><use href="#i-min" /></svg></button>
+        <button class="icon-btn" id="maxBtn" title="Maximize" aria-label="Maximize"><svg class="icon"><use href="#i-max" /></svg></button>
+        <button class="icon-btn close-control" id="closeBtn" title="Close" aria-label="Close"><svg class="icon"><use href="#i-close" /></svg></button>
+      </div>
+    </div>
+
+    <header class="topbar">
+      <div class="brand">
+        <div class="brand-mark"><svg class="icon"><use href="#i-logo" /></svg></div>
+        <div class="brand-text">
+          <div class="brand-name">Queue Sniper</div>
+          <div class="brand-sub">App Dashboard</div>
+        </div>
+      </div>
+      <div class="topbar-right">
+        <label class="theme-select" title="Theme">
+          <svg class="icon"><use href="#i-palette" /></svg>
+          <select id="themeSelect" aria-label="Theme">
+            <option value="dark">Dark</option>
+            <option value="midnight">Midnight</option>
+          </select>
+          <svg class="icon chev"><use href="#i-chevron" /></svg>
+        </label>
+        <button class="btn btn-ghost btn-sm" id="logoutBtn"><svg class="icon"><use href="#i-logout" /></svg> Log Out</button>
+        <div class="topbar-divider"></div>
+        <button class="icon-btn has-dot" id="bellBtn" title="Notifications" aria-label="Notifications"><svg class="icon"><use href="#i-bell" /></svg></button>
+        <button class="icon-btn" id="helpBtn" title="Help" aria-label="Help"><svg class="icon"><use href="#i-help" /></svg></button>
+        <button class="icon-btn" id="settingsBtn" title="Settings" aria-label="Settings"><svg class="icon"><use href="#i-globe" /></svg></button>
+      </div>
+    </header>
+
+    <main class="main">
+      <section class="panel left">
+        <div class="card status-card" id="statusCard">
+          <div class="status-top">
+            <div class="status-main">
+              <div class="status-label">
+                <span class="status-dot" id="statusDot"></span>
+                <span id="statusLabel">OFFLINE</span>
+              </div>
+              <p class="status-sub" id="statusSub">Not logged in</p>
+            </div>
+            <span class="badge badge-green">Premium · Lifetime</span>
+          </div>
+          <div class="watching-row">
+            <span class="watching-label"><svg class="icon"><use href="#i-eye" /></svg> WATCHING</span>
+            <span class="badge badge-soft" id="watchingBadge">TURBO</span>
+          </div>
+          <div class="status-actions">
+            <button class="btn btn-primary" id="startBtn"><svg class="icon"><use href="#i-play" /></svg> START</button>
+            <button class="btn btn-outline" id="stopBtn" disabled><svg class="icon"><use href="#i-stop" /></svg> STOP</button>
+          </div>
+        </div>
+
+        <div class="card activity-card">
+          <div class="card-header">
+            <div class="card-title"><span class="eyebrow">Activity Log</span></div>
+            <button class="text-btn" id="clearLogBtn">CLEAR</button>
+          </div>
+          <div class="log" id="activityLog" aria-live="polite">
+            <div class="log-empty" id="logEmpty">
+              <strong>No activity yet</strong>
+              Press START to begin watching queues.
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel middle">
+        <div class="card watchlist-card">
+          <div class="card-header">
+            <div class="card-title"><span class="eyebrow">Watchlist</span></div>
+            <div class="segmented" id="optionToggle" role="tablist" aria-label="Watchlist option">
+              <button class="active" data-option="A" role="tab" aria-selected="true">Option A</button>
+              <button data-option="B" role="tab" aria-selected="false">Option B</button>
+            </div>
+          </div>
+          <div class="watchlist-body">
+            <div class="tabs" id="filterTabs" role="tablist" aria-label="Filter servers">
+              <button class="tab active" data-filter="all" role="tab" aria-selected="true">All</button>
+              <button class="tab" data-filter="selected" role="tab" aria-selected="false">Selected Only</button>
+              <button class="tab tab-add" data-filter="custom" role="tab" aria-selected="false">+ Custom</button>
+            </div>
+            <div class="server-list" id="serverList"></div>
+            <form class="custom-form" id="customForm">
+              <input id="customName" type="text" placeholder="Server name" autocomplete="off" maxlength="40" />
+              <div class="custom-row">
+                <input id="customId" type="text" placeholder="Channel ID (optional)" autocomplete="off" maxlength="40" />
+                <button class="btn btn-outline" type="submit">ADD</button>
+              </div>
+            </form>
+            <button class="btn btn-primary btn-block save-btn" id="saveSettingsBtn">SAVE SETTINGS</button>
+          </div>
+        </div>
+
+        <div class="card clickmode-card">
+          <div class="card-header">
+            <div class="card-title"><span class="eyebrow">Click Mode</span></div>
+            <span class="hint" id="modeHint">Turbo</span>
+          </div>
+          <div class="mode-list" id="modeList">
+            <button class="mode-item active" data-mode="turbo">
+              <span class="mode-icon"><svg class="icon"><use href="#i-rocket" /></svg></span>
+              <span class="mode-text">
+                <span class="mode-name">Turbo</span>
+                <span class="mode-desc">Click the instant a queue opens. Fastest.</span>
+              </span>
+              <span class="mode-check"></span>
+            </button>
+            <button class="mode-item" data-mode="patience">
+              <span class="mode-icon"><svg class="icon"><use href="#i-hourglass" /></svg></span>
+              <span class="mode-text">
+                <span class="mode-name">Patience</span>
+                <span class="mode-desc">Wait for stable latency before reacting.</span>
+              </span>
+              <span class="mode-check"></span>
+            </button>
+            <button class="mode-item" data-mode="safe">
+              <span class="mode-icon"><svg class="icon"><use href="#i-shield" /></svg></span>
+              <span class="mode-text">
+                <span class="mode-name">Safe</span>
+                <span class="mode-desc">Slower clicks with rate-limit protection.</span>
+              </span>
+              <span class="mode-check"></span>
+            </button>
+            <button class="mode-item" data-mode="smart">
+              <span class="mode-icon"><svg class="icon"><use href="#i-sparkles" /></svg></span>
+              <span class="mode-text">
+                <span class="mode-name">Smart</span>
+                <span class="mode-desc">Adapts speed to current network conditions.</span>
+              </span>
+              <span class="mode-check"></span>
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel help">
+        <div class="card help-card" id="helpCard">
+          <div class="help-top">
+            <div class="dots" id="helpDots"></div>
+            <span class="step-counter" id="stepCounter">1 / 3</span>
+          </div>
+          <div class="step-header">
+            <div class="step-num" id="stepNum">1</div>
+            <div class="step-title" id="stepTitle">GET STARTED <small>Queue Sniper</small></div>
+            <a class="stats-link" href="#" id="statsLink">Stats</a>
+          </div>
+          <div class="help-body" id="helpBody"></div>
+          <div class="diagnostics">
+            <div class="diag-header">
+              <span class="eyebrow">Diagnostics</span>
+              <div class="diag-actions">
+                <button class="text-btn" id="nerdsBtn">NERDS</button>
+                <button class="text-btn" id="copyDiagBtn">COPY</button>
+                <button class="btn btn-green btn-xs" id="runDiagBtn">RUN</button>
+              </div>
+            </div>
+            <pre class="diag-output" id="diagOutput">$ ready — press RUN to test your setup</pre>
+          </div>
+          <div class="help-nav">
+            <button class="icon-btn nav-btn" id="helpPrev" aria-label="Previous step"><svg class="icon"><use href="#i-arrow-left" /></svg></button>
+            <span class="step-counter" id="helpStepLabel">STEP 1 OF 3</span>
+            <button class="icon-btn nav-btn" id="helpNext" aria-label="Next step"><svg class="icon"><use href="#i-arrow-right" /></svg></button>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel right">
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title"><span class="eyebrow">Alerts</span></div>
+            <span class="badge badge-green">All On</span>
+          </div>
+          <div class="toggle-row">
+            <span class="row-icon"><svg class="icon"><use href="#i-desktop" /></svg></span>
+            <span class="row-label">Desktop Notifications<small>System popup when a queue opens</small></span>
+            <button class="switch on" role="switch" aria-checked="true" aria-label="Desktop Notifications"></button>
+          </div>
+          <div class="toggle-row">
+            <span class="row-icon"><svg class="icon"><use href="#i-volume" /></svg></span>
+            <span class="row-label">Sound Notifications<small>Play alarm on queue detection</small></span>
+            <button class="switch on" role="switch" aria-checked="true" aria-label="Sound Notifications"></button>
+          </div>
+          <div class="volume-row" id="volumeRow">
+            <svg class="icon" style="width:14px;height:14px;color:var(--muted)"><use href="#i-sound" /></svg>
+            <input id="volumeSlider" type="range" min="0" max="100" value="72" aria-label="Alarm volume" />
+            <span class="volume-value" id="volumeValue">72%</span>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title"><span class="eyebrow">Custom Sounds</span></div>
+            <span class="badge badge-muted">3 Slots</span>
+          </div>
+          <div class="sound-row">
+            <span class="sound-name" data-sound-name>Air Horn</span>
+            <span class="badge badge-green">Premium</span>
+            <button class="btn btn-outline btn-xs upload-btn" data-sound="Air Horn">Upload</button>
+          </div>
+          <div class="sound-row">
+            <span class="sound-name" data-sound-name>Chime</span>
+            <span class="badge badge-green">Premium</span>
+            <button class="btn btn-outline btn-xs upload-btn" data-sound="Chime">Upload</button>
+          </div>
+          <div class="sound-row">
+            <span class="sound-name" data-sound-name>Default Ping</span>
+            <span class="badge badge-muted">Free</span>
+            <button class="btn btn-outline btn-xs upload-btn" data-sound="Default Ping">Upload</button>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title"><span class="eyebrow">Webhook Notifications</span></div>
+            <button class="switch" id="webhookToggle" role="switch" aria-checked="false" aria-label="Webhook Notifications"></button>
+          </div>
+          <div class="webhook-details is-muted" id="webhookDetails">
+            <div class="section-label"><span class="eyebrow">Webhook URL</span></div>
+            <div class="input-wrap">
+              <input id="webhookUrl" type="password" placeholder="https://discord.com/api/webhooks/••••••••" autocomplete="off" disabled />
+            </div>
+            <button class="btn btn-outline btn-block test-webhook" id="testWebhookBtn" disabled>TEST WEBHOOK</button>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title"><span class="eyebrow">Notify On</span></div>
+            <span class="hint">3 of 4</span>
+          </div>
+          <div class="toggle-row">
+            <span class="row-icon"><svg class="icon"><use href="#i-plus" /></svg></span>
+            <span class="row-label">Queue Opens</span>
+            <button class="switch on" role="switch" aria-checked="true" aria-label="Notify on queue opens"></button>
+          </div>
+          <div class="toggle-row">
+            <span class="row-icon"><svg class="icon"><use href="#i-check" /></svg></span>
+            <span class="row-label">Successful Join</span>
+            <button class="switch on" role="switch" aria-checked="true" aria-label="Notify on successful join"></button>
+          </div>
+          <div class="toggle-row">
+            <span class="row-icon"><svg class="icon"><use href="#i-bug" /></svg></span>
+            <span class="row-label">Errors &amp; Disconnects</span>
+            <button class="switch on" role="switch" aria-checked="true" aria-label="Notify on errors and disconnects"></button>
+          </div>
+          <div class="toggle-row">
+            <span class="row-icon"><svg class="icon"><use href="#i-stats" /></svg></span>
+            <span class="row-label">Daily Summary</span>
+            <button class="switch" role="switch" aria-checked="false" aria-label="Notify with a daily summary"></button>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <div class="closed-overlay" id="closedOverlay">
+    <div class="closed-card">
+      <div class="closed-icon"><svg class="icon"><use href="#i-power" /></svg></div>
+      <h2>Dashboard closed</h2>
+      <p>This is a browser preview. In the desktop app the sniper keeps running in the tray.</p>
+      <button class="btn btn-primary" id="reopenBtn">REOPEN DASHBOARD</button>
+    </div>
+  </div>
+
+  <div class="toast-stack" id="toastStack"></div>
+
+  <script src="app.js"></script>
+</body>
+</html>

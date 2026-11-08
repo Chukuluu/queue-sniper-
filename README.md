@@ -84,6 +84,24 @@ That's it. Leave the window open. Press `Ctrl+C` to stop.
 
 ---
 
+## Dashboard UI
+
+The dark control-panel mock-up lives in `dashboard/`. It is plain HTML/CSS/JS —
+no build step and no npm install.
+
+Open **`dashboard/index.html`** in a browser (or double-click it) to explore the
+flow: start/stop, server selection, click modes, alerts, custom sounds, webhook
+setup and diagnostics.
+
+> The dashboard is a UI prototype. It does **not** talk to the sniper yet —
+> pressing START only updates the mock state and activity log.
+
+Keyboard: `Space` start/stop, `Ctrl+L` clear log, `Ctrl+D` run diagnostics,
+`Esc` close/reopen the mock window. It is designed for a desktop window; below
+920px wide it stacks into a single column.
+
+---
+
 ## Getting your Discord token
 
 Use a browser, not the desktop app:
@@ -405,6 +423,7 @@ run.bat            start from source / commands
 build/             PyInstaller temp files (safe to delete)
 logs/              daily logs
 alarm.wav          generated on first run
+dashboard/         static App Dashboard UI (index.html + css + app.js)
 ```
 
 ---
