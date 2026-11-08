@@ -19,6 +19,7 @@ from __future__ import annotations
 
 import asyncio
 import functools
+import json
 import os
 import sys
 import threading
@@ -47,6 +48,7 @@ from sniper import (
     clean_id,
     get_token,
     load_config,
+    normalize_channel_servers,
     parse_channel_ref,
     resolve_servers,
     resolve_watch,
@@ -118,6 +120,7 @@ class DashboardSniper(QueueSniper):
     async def on_ready(self) -> None:
         await super().on_ready()
         self.service.mark_online(self)
+        self.service.capture_metadata(self)
 
     async def close(self) -> None:
         self.service.set_status("stopping", "Stopping sniper...")
@@ -146,7 +149,10 @@ class DashboardService:
         self._window: Optional[Any] = None
         self._maximized = False
         self._last_click_ms = -1.0
+        self._meta: dict[int, dict[str, Any]] = {}
+        self._meta_busy = False
         threading.Thread(target=self._measure_clock, name="clock-offset", daemon=True).start()
+        self._start_metadata_refresh()
 
     # -- plumbing ---------------------------------------------------------
 
@@ -158,6 +164,250 @@ class DashboardService:
             offset = sniper.measure_clock_offset(0.8)
             with self._lock:
                 self._clock_offset = offset
+        except Exception:
+            pass
+
+    # -- watchlist metadata (server names + icons) ------------------------
+
+    def _discord_get(self, path: str, token: str, timeout: float = 6.0) -> Any:
+        request = urllib.request.Request(
+            "https://discord.com/api/v10" + path,
+            headers={
+                "Authorization": token,
+                "Accept": "application/json",
+                "User-Agent": "QueueSniper/1.0",
+            },
+            method="GET",
+        )
+        with urllib.request.urlopen(request, timeout=timeout) as response:
+            return json.loads(response.read().decode("utf-8"))
+
+    def _start_metadata_refresh(self) -> None:
+        """Look up server names/icons in the background, without blocking the UI."""
+        with self._lock:
+            if self._meta_busy:
+                return
+            self._meta_busy = True
+        threading.Thread(
+            target=self._resolve_metadata, name="watchlist-meta", daemon=True
+        ).start()
+
+    def _config_metadata(self, cfg: dict) -> tuple[dict[int, int], dict[int, str], dict[int, str]]:
+        mapping = normalize_channel_servers(cfg.get("channel_servers"))
+        names = {int(key): str(value) for key, value in resolve_servers(cfg).items()}
+        icons: dict[int, str] = {}
+        raw_icons = cfg.get("server_icons")
+        if isinstance(raw_icons, dict):
+            for key, value in raw_icons.items():
+                try:
+                    icons[int(key)] = str(value)
+                except (TypeError, ValueError):
+                    continue
+        return mapping, names, icons
+
+    def _resolve_metadata(self) -> None:
+        try:
+            token = get_token(interactive=False)
+            if not token:
+                return
+            cfg = load_config()
+            watch = resolve_watch(cfg)
+            if not watch:
+                return
+
+            mapping, names, icons = self._config_metadata(cfg)
+
+            # One call gives every guild name + icon hash.
+            guilds: dict[int, dict[str, Any]] = {}
+            try:
+                listing = self._discord_get("/users/@me/guilds", token)
+                if isinstance(listing, list):
+                    for guild in listing:
+                        try:
+                            guilds[int(guild["id"])] = guild
+                        except (KeyError, TypeError, ValueError):
+                            continue
+            except Exception:
+                pass
+
+            changed = False
+            channel_names: dict[int, str] = {}
+
+            # If a channel is not linked to a server (or has no name yet), list
+            # the channels of each configured server. This works for channels
+            # that return 403 on GET /channels/{id}.
+            needs_lookup = any(
+                channel_id not in mapping or not str(friendly or "").strip()
+                for channel_id, friendly in watch.items()
+            )
+            if needs_lookup:
+                for server_id in list(names):
+                    if guilds and server_id not in guilds:
+                        continue
+                    try:
+                        channels = self._discord_get(
+                            f"/guilds/{server_id}/channels", token
+                        )
+                    except Exception:
+                        continue
+                    if not isinstance(channels, list):
+                        continue
+                    for channel in channels:
+                        try:
+                            channel_id = int(channel["id"])
+                        except (KeyError, TypeError, ValueError):
+                            continue
+                        if channel_id not in watch:
+                            continue
+                        mapping[channel_id] = server_id
+                        name = str(channel.get("name") or "")
+                        if name:
+                            channel_names[channel_id] = name
+                        changed = True
+
+            # Fallback for anything the guild lists did not cover.
+            for channel_id, friendly in watch.items():
+                if channel_id in mapping and str(friendly or "").strip():
+                    continue
+                try:
+                    channel = self._discord_get(f"/channels/{channel_id}", token)
+                except Exception:
+                    continue
+                name = str(channel.get("name") or "")
+                if name:
+                    channel_names[channel_id] = name
+                if channel_id not in mapping and channel.get("guild_id"):
+                    try:
+                        mapping[channel_id] = int(channel["guild_id"])
+                        changed = True
+                    except (TypeError, ValueError):
+                        pass
+
+            # Refresh server names/icons for every server we know about.
+            for server_id in set(list(names) + list(mapping.values())):
+                guild = guilds.get(server_id) or {}
+                name = str(guild.get("name") or names.get(server_id) or "")
+                icon_hash = str(guild.get("icon") or "")
+                icon = (
+                    f"https://cdn.discordapp.com/icons/{server_id}/"
+                    f"{icon_hash}.png?size=64"
+                    if icon_hash
+                    else ""
+                )
+                if name and names.get(server_id) != name:
+                    names[server_id] = name
+                    changed = True
+                if guilds and icons.get(server_id, "") != icon:
+                    icons[server_id] = icon
+                    changed = True
+
+            for channel_id, name in channel_names.items():
+                if str(watch.get(channel_id, "")).strip() != name:
+                    watch[channel_id] = name
+                    changed = True
+
+            updates: dict[int, dict[str, Any]] = {}
+            for channel_id, channel_name in watch.items():
+                server_id = mapping.get(channel_id, 0)
+                info: dict[str, Any] = {}
+                if channel_name:
+                    info["channel_name"] = str(channel_name)
+                if server_id:
+                    info.update(
+                        {
+                            "server_id": str(server_id),
+                            "server_name": names.get(server_id, ""),
+                            "server_icon": icons.get(server_id, ""),
+                        }
+                    )
+                if info:
+                    updates[channel_id] = info
+
+            with self._lock:
+                self._meta.update(updates)
+
+            if updates or changed:
+                latest = load_config()
+                latest["watch_channels"] = {
+                    str(channel_id): str(name) for channel_id, name in watch.items()
+                }
+                latest["channel_servers"] = {
+                    str(channel_id): str(server_id)
+                    for channel_id, server_id in mapping.items()
+                }
+                latest["server_icons"] = {
+                    str(server_id): icon for server_id, icon in icons.items() if icon
+                }
+                latest["watch_servers"] = {
+                    str(server_id): name for server_id, name in names.items()
+                }
+                save_config(latest)
+        except Exception:
+            pass
+        finally:
+            with self._lock:
+                self._meta_busy = False
+
+    def capture_metadata(self, client: DashboardSniper) -> None:
+        """Read the real guild/channel names and icons once the sniper is online."""
+        try:
+            cfg = load_config()
+            watch = resolve_watch(cfg)
+            mapping, names, icons = self._config_metadata(cfg)
+            updates: dict[int, dict[str, Any]] = {}
+            changed = False
+            for channel_id in watch:
+                channel = client.get_channel(channel_id)
+                if channel is None:
+                    continue
+                channel_name = str(getattr(channel, "name", "") or "")
+                info: dict[str, Any] = {"channel_name": channel_name}
+                if channel_name and str(watch.get(channel_id, "")).strip() != channel_name:
+                    watch[channel_id] = channel_name
+                    changed = True
+                guild = getattr(channel, "guild", None)
+                if guild is not None:
+                    server_id = int(guild.id)
+                    mapping[channel_id] = server_id
+                    changed = True
+                    guild_name = str(getattr(guild, "name", "") or "")
+                    if guild_name:
+                        names[server_id] = guild_name
+                    icon = ""
+                    try:
+                        if getattr(guild, "icon", None) is not None:
+                            icon = guild.icon.with_size(64).url
+                    except Exception:
+                        icon = ""
+                    icons[server_id] = icon
+                    info.update(
+                        {
+                            "server_id": str(server_id),
+                            "server_name": guild_name or names.get(server_id, ""),
+                            "server_icon": icon,
+                        }
+                    )
+                updates[channel_id] = info
+
+            with self._lock:
+                self._meta.update(updates)
+
+            if changed or updates:
+                latest = load_config()
+                latest["watch_channels"] = {
+                    str(channel_id): str(name) for channel_id, name in watch.items()
+                }
+                latest["channel_servers"] = {
+                    str(channel_id): str(server_id)
+                    for channel_id, server_id in mapping.items()
+                }
+                latest["server_icons"] = {
+                    str(server_id): icon for server_id, icon in icons.items() if icon
+                }
+                latest["watch_servers"] = {
+                    str(server_id): name for server_id, name in names.items()
+                }
+                save_config(latest)
         except Exception:
             pass
 
@@ -195,19 +445,42 @@ class DashboardService:
     def channels(self) -> list[dict[str, Any]]:
         cfg = load_config()
         watch = resolve_watch(cfg)
+        mapping, names, icons = self._config_metadata(cfg)
+        with self._lock:
+            meta = {key: dict(value) for key, value in self._meta.items()}
+
         out: list[dict[str, Any]] = []
         for channel_id, friendly in watch.items():
             key = str(channel_id)
-            name = (friendly or "").strip() or f"Channel {mask_id(key)}"
+            live = meta.get(channel_id, {})
+
+            try:
+                server_id = int(live.get("server_id") or mapping.get(channel_id) or 0)
+            except (TypeError, ValueError):
+                server_id = 0
+
+            server_name = str(live.get("server_name") or names.get(server_id) or "").strip()
+            server_icon = str(live.get("server_icon") or icons.get(server_id) or "").strip()
+            channel_name = str(
+                live.get("channel_name") or friendly or ""
+            ).strip()
+
+            name = channel_name or f"Channel {mask_id(key)}"
+            server_label = server_name or (
+                f"Server {mask_id(str(server_id))}" if server_id else "Server not linked"
+            )
             out.append(
                 {
                     "id": key,
                     "name": name[:40],
+                    "serverId": str(server_id) if server_id else "",
+                    "serverName": server_label[:40],
+                    "serverIcon": server_icon,
                     "tag": "WATCH",
                     "tagClass": "tag-green",
-                    "initials": initials_for(name),
-                    "avatar": avatar_for(key),
-                    "meta": f"Watched channel · ID {mask_id(key)}",
+                    "initials": initials_for(server_name or name),
+                    "avatar": avatar_for(str(server_id) if server_id else key),
+                    "meta": f"{server_label} · ID {mask_id(key)}",
                     "selected": True,
                     "custom": False,
                 }
@@ -434,6 +707,12 @@ class DashboardService:
         watch = resolve_watch(cfg)
         keep = {int(channel_id): watch.get(int(channel_id), "") for channel_id in wanted}
         cfg["watch_channels"] = {str(key): value for key, value in keep.items()}
+        mapping = normalize_channel_servers(cfg.get("channel_servers"))
+        cfg["channel_servers"] = {
+            str(channel_id): str(server_id)
+            for channel_id, server_id in mapping.items()
+            if channel_id in keep
+        }
         cfg["channel_id"] = ""
         cfg["server_id"] = ""
 
@@ -499,29 +778,58 @@ class DashboardService:
         save_config(cfg)
         return {"ok": True}
 
-    def add_channel(self, name: str = "", ref: str = "") -> dict[str, Any]:
-        ref = str(ref or "").strip()
-        server_id, channel_id = parse_channel_ref(ref)
-        if not channel_id:
+    def add_channel(self, name: str = "", server_id: str = "", channel_id: str = "") -> dict[str, Any]:
+        name = str(name or "").strip()[:60]
+        link_server, channel = parse_channel_ref(str(channel_id or ""))
+        given_server = clean_id(server_id)
+
+        if not channel:
             return {
                 "ok": False,
                 "error": "Paste a channel link or a 15-22 digit channel ID.",
             }
+        if link_server and given_server and link_server != given_server:
+            return {
+                "ok": False,
+                "error": "The server ID and the channel link point to different servers.",
+            }
+        server = given_server or link_server
+        if not server:
+            return {
+                "ok": False,
+                "error": "Enter the server ID as well as the channel ID.",
+            }
+
         cfg = load_config()
         watch = resolve_watch(cfg)
-        label = str(name or "").strip()[:60] or f"Channel {mask_id(channel_id)}"
-        watch[int(channel_id)] = label
+        watch[int(channel)] = ""
         cfg["watch_channels"] = {str(key): value for key, value in watch.items()}
         cfg["channel_id"] = ""
         cfg["server_id"] = ""
-        if server_id:
-            servers = resolve_servers(cfg)
-            servers.setdefault(int(server_id), label)
-            cfg["watch_servers"] = {str(key): value for key, value in servers.items()}
+
+        servers = resolve_servers(cfg)
+        server_label = name or servers.get(int(server)) or f"Server {mask_id(server)}"
+        servers[int(server)] = server_label
+        cfg["watch_servers"] = {str(key): value for key, value in servers.items()}
+
+        mapping = normalize_channel_servers(cfg.get("channel_servers"))
+        mapping[int(channel)] = int(server)
+        cfg["channel_servers"] = {
+            str(key): str(value) for key, value in mapping.items()
+        }
+
         save_config(cfg)
         self._apply_live_settings(cfg, watch, self._click_mode(cfg))
-        self.push_event(f"Channel added: {label} ({mask_id(channel_id)})", "OK")
-        return {"ok": True, "name": label, "channel_id": channel_id}
+        self.push_event(
+            f"Channel added: {server_label} / {mask_id(channel)}", "OK"
+        )
+        self._start_metadata_refresh()
+        return {
+            "ok": True,
+            "name": server_label,
+            "server_id": server,
+            "channel_id": channel,
+        }
 
     def remove_channel(self, channel_id: str = "") -> dict[str, Any]:
         target = clean_id(channel_id)
@@ -536,6 +844,11 @@ class DashboardService:
             watch[int(target)] = removed
             return {"ok": False, "error": "Keep at least one channel in the watchlist."}
         cfg["watch_channels"] = {str(key): value for key, value in watch.items()}
+        mapping = normalize_channel_servers(cfg.get("channel_servers"))
+        mapping.pop(int(target), None)
+        cfg["channel_servers"] = {
+            str(key): str(value) for key, value in mapping.items()
+        }
         cfg["channel_id"] = ""
         cfg["server_id"] = ""
         save_config(cfg)

@@ -3,6 +3,8 @@
   "channel_id": "",
   "watch_servers": {},
   "watch_channels": {},
+  "channel_servers": {},
+  "server_icons": {},
   "watch_threads": true,
   "button_patterns": [
     "enter\\s+(the\\s+)?wait\\s*-?\\s*list",

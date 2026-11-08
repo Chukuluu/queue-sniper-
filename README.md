@@ -100,9 +100,13 @@ no terminal.
   Closing the window stops the sniper.
 - The activity log shows the real sniper output (`Logged in as …`, `Watching #…`,
   `DETECTED`, `CLICKED` with timings).
-- The Watchlist shows the channels already in `config.json`. Toggle them and press
-  **SAVE SETTINGS** to rewrite `watch_channels`. Use **+ Custom** to add a channel
-  by link or ID.
+- The Watchlist shows every watched channel with its **server name and server
+  icon**, resolved automatically from Discord. Toggle channels and press
+  **SAVE SETTINGS** to rewrite `watch_channels`.
+- **+ Custom** asks for the **Server ID** and the **Channel ID** (or a channel
+  link, which supplies the server ID). Both are required so the card can show the
+  right server. A link whose server ID does not match the one you typed is
+  rejected.
 - **Click Mode** (Turbo / Patience / Safe / Smart) rewrites `retry_attempts`,
   `retry_delay_ms` and `click_cooldown_seconds`, and applies live if the sniper is
   already running.
@@ -179,9 +183,10 @@ Paste them when the setup wizard asks, or put them in `config.json`:
 ```
 
 Channel IDs are globally unique; the server ID is used to check the channel is in
-the right place. To watch more than one channel, add them to `watch_channels`.
-If those channels are spread across several servers, also list the servers in
-`watch_servers`:
+the right place and to show the server's name and icon. To watch more than one
+channel, add them to `watch_channels`. If those channels are spread across several
+servers, also list the servers in `watch_servers` and link each channel with
+`channel_servers`:
 
 ```json
 {
@@ -192,15 +197,22 @@ If those channels are spread across several servers, also list the servers in
     "222222222222222222": "Server Two"
   },
   "watch_channels": {
-    "333333333333333333": "",
-    "444444444444444444": ""
-  }
+    "333333333333333333": "queue-one",
+    "444444444444444444": "queue-two"
+  },
+  "channel_servers": {
+    "333333333333333333": "111111111111111111",
+    "444444444444444444": "222222222222222222"
+  },
+  "server_icons": {}
 }
 ```
 
 Leave `server_id` and `channel_id` empty when using the multi-server layout;
-`watch_channels` is the list that is actually watched. Empty channel names are
-fine — the sniper logs the real channel name once it connects.
+`watch_channels` is the list that is actually watched. The dashboard fills in
+`watch_servers`, the real channel names and `server_icons` automatically the first
+time it connects, and keeps them updated. `server_icons` is only a cache; you do
+not need to edit it by hand.
 
 Not sure which ID is which? Run `QueueSniper.exe --list` (or `run.bat --list`)
 after adding your token; it prints every server and channel with its ID.
@@ -232,9 +244,10 @@ When adding, you can either:
 - paste a **channel link** (`https://discord.com/channels/…/…`), or
 - type the **Server ID**, then the **Channel ID**.
 
-Channel IDs are enough on their own; the server ID is used to warn you if a
-channel is not where it was expected. Nothing is deleted unless you choose it,
-and the sniper starts automatically after you pick **Done**.
+The **server ID is required** (a channel link supplies it for you); it links the
+channel to its server so the dashboard can show the server name and icon. Nothing
+is deleted unless you choose it, and the sniper starts automatically after you
+pick **Done**.
 
 You can still edit `config.json` by hand if you prefer; the menu uses the same
 `watch_servers` / `watch_channels` keys.
@@ -301,6 +314,8 @@ Other useful settings:
 | `channel_id` | The waitlist channel to watch |
 | `watch_servers` | Multiple servers, as `"server_id": "name"`. Use this when the watched channels are in different servers |
 | `watch_channels` | Channels to watch, as `"channel_id": "name"`. This is the list used for multi-channel watching |
+| `channel_servers` | Links each watched channel to its server, as `"channel_id": "server_id"`. Filled in by the dashboard/setup; used for the Watchlist server name and icon |
+| `server_icons` | Cache of server icon URLs keyed by server ID, as `"server_id": "https://cdn.discordapp.com/…"`. Managed automatically |
 | `watch_threads` | Also watch threads under a watched channel |
 | `click_cooldown_seconds` | Minimum gap between clicks in one channel |
 | `rearm_after_seconds` | Re-click the same button after N seconds (`0` = only after it is seen disabled and re-enabled) |

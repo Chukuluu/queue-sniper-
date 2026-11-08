@@ -141,11 +141,14 @@
       return {
         id: typeof s.id === "string" ? s.id : "srv-" + i,
         name: s.name.slice(0, 40),
+        serverId: typeof s.serverId === "string" ? s.serverId.slice(0, 24) : "",
+        serverName: typeof s.serverName === "string" ? s.serverName.slice(0, 40) : "",
+        serverIcon: typeof s.serverIcon === "string" && /^https:\/\//.test(s.serverIcon) && s.serverIcon.length < 500 ? s.serverIcon : "",
         tag: typeof s.tag === "string" ? s.tag.slice(0, 10) : "CUSTOM",
         tagClass: /^tag-(blue|purple|amber|green|muted)$/.test(s.tagClass) ? s.tagClass : "tag-green",
         initials: typeof s.initials === "string" ? s.initials.slice(0, 3) : "QS",
         avatar: typeof s.avatar === "string" ? s.avatar : "linear-gradient(135deg, #22c55e, #0ea5e9)",
-        meta: typeof s.meta === "string" ? s.meta.slice(0, 64) : "Custom server",
+        meta: typeof s.meta === "string" ? s.meta.slice(0, 80) : "Custom server",
         selected: !!s.selected,
         custom: !!s.custom
       };
@@ -251,9 +254,14 @@
     isDesktop = true;
     document.body.classList.add("is-desktop");
     var idInput = $("#customId");
+    var serverInput = $("#customServerId");
     if (idInput) {
       idInput.placeholder = "Channel ID or link (required)";
       idInput.required = true;
+    }
+    if (serverInput) {
+      serverInput.placeholder = "Server ID (required)";
+      serverInput.required = true;
     }
     log("info", "Desktop engine connected");
     pollState(true);
@@ -491,6 +499,19 @@
       avatar.className = "server-avatar";
       avatar.style.setProperty("--av", server.avatar);
       avatar.textContent = server.initials;
+      if (server.serverIcon) {
+        var icon = document.createElement("img");
+        icon.src = server.serverIcon;
+        icon.alt = "";
+        icon.loading = "lazy";
+        icon.addEventListener("load", function () { avatar.textContent = ""; });
+        icon.addEventListener("error", function () {
+          icon.remove();
+          avatar.textContent = server.initials;
+        });
+        avatar.appendChild(icon);
+      }
+      if (server.serverName) avatar.title = server.serverName;
 
       var info = document.createElement("span");
       info.className = "server-info";
@@ -552,70 +573,88 @@
       var form = $("#customForm");
       form.classList.toggle("open", state.filter === "custom");
       renderServers();
-      if (state.filter === "custom") $("#customName").focus();
+      if (state.filter === "custom") $("#customServerId").focus();
     });
   });
 
   $("#customForm").addEventListener("submit", function (event) {
     event.preventDefault();
     var nameInput = $("#customName");
+    var serverInput = $("#customServerId");
     var idInput = $("#customId");
     var name = nameInput.value.trim();
     var ref = idInput.value.trim();
+    var linkMatch = ref.match(/discord(?:app)?\.com\/channels\/(\d{15,22})\/(\d{15,22})/i);
+    var server = serverInput.value.trim() || (linkMatch ? linkMatch[1] : "");
+    var channel = linkMatch ? linkMatch[2] : ref.replace(/\D/g, "");
 
-    if (!name) {
-      toast("Enter a channel name", "warn");
-      nameInput.focus();
+    if (!server) {
+      toast("Enter the server ID as well as the channel ID", "warn");
+      serverInput.focus();
+      return;
+    }
+    if (!/^\d{15,22}$/.test(server)) {
+      toast("Server ID should be 15-22 digits", "warn");
+      serverInput.focus();
+      return;
+    }
+    if (!channel || !/^\d{15,22}$/.test(channel)) {
+      toast("Paste a valid channel ID or channel link", "warn");
+      idInput.focus();
+      return;
+    }
+    if (linkMatch && linkMatch[1] !== server) {
+      toast("Server ID and channel link do not match", "warn");
+      serverInput.focus();
       return;
     }
 
     if (isDesktop && bridge) {
-      if (!ref) {
-        toast("Paste the channel ID or a channel link", "warn");
-        idInput.focus();
-        return;
-      }
       var addBtn = $("#customForm button[type=submit]");
       addBtn.disabled = true;
       addBtn.textContent = "ADDING";
-      bridge.add_channel(name, ref).then(function (res) {
+      bridge.add_channel(name, server, ref).then(function (res) {
         addBtn.disabled = false;
-        addBtn.textContent = "ADD";
+        addBtn.textContent = "ADD CHANNEL";
         if (!res || !res.ok) {
           toast((res && res.error) || "Could not add that channel", "warn");
           return;
         }
         $("#customForm").reset();
-        toast("Channel added", "ok");
+        toast("Channel added · " + (res.name || "server"), "ok");
         pollState(true);
       }, function (err) {
         addBtn.disabled = false;
-        addBtn.textContent = "ADD";
+        addBtn.textContent = "ADD CHANNEL";
         toast("Add failed: " + err, "warn");
       });
       return;
     }
 
-    var initials = name.split(/\s+/).slice(0, 2).map(function (word) {
+    var serverLabel = name || ("Server ••••" + server.slice(-4));
+    var initials = serverLabel.split(/\s+/).slice(0, 2).map(function (word) {
       return word.charAt(0);
     }).join("").toUpperCase() || "QS";
 
     state.servers.push({
-      id: "custom-" + Date.now(),
-      name: name.slice(0, 40),
-      tag: "CUSTOM",
+      id: channel,
+      name: "Channel ••••" + channel.slice(-4),
+      serverId: server,
+      serverName: serverLabel,
+      serverIcon: "",
+      tag: "WATCH",
       tagClass: "tag-green",
       initials: initials,
       avatar: "linear-gradient(135deg, #22c55e, #0ea5e9)",
-      meta: ref ? "ID " + ref.slice(0, 6) + "••••" : "Custom server · 1 channel",
+      meta: serverLabel + " · ID ••••" + channel.slice(-4),
       selected: true,
       custom: true
     });
 
     $("#customForm").reset();
     renderServers();
-    log("ok", "Custom server added: " + name);
-    toast("Custom server added", "ok");
+    log("ok", "Custom channel added: " + serverLabel);
+    toast("Custom channel added", "ok");
   });
 
   function saveSettings() {

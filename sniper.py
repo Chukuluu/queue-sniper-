@@ -67,6 +67,11 @@ DEFAULT_CONFIG = {
     "watch_servers": {},
     # channel_id -> friendly name (optional; for watching more than one channel).
     "watch_channels": {},
+    # channel_id -> server_id: which server each watched channel lives in.
+    # Used by the dashboard to show the server name and icon on every channel.
+    "channel_servers": {},
+    # server_id -> icon URL (dashboard cache; refreshed when the sniper connects).
+    "server_icons": {},
     # Also watch messages inside threads whose parent channel is watched.
     "watch_threads": True,
     # Buttons are matched against "<label> <custom_id>".
@@ -366,6 +371,22 @@ def normalize_watch(raw) -> dict[int, str]:
                 continue
         return out
     return {}
+
+
+def normalize_channel_servers(raw) -> dict[int, int]:
+    """channel_id -> server_id, keeping only valid-looking snowflakes."""
+    if not isinstance(raw, dict):
+        return {}
+    out: dict[int, int] = {}
+    for key, value in raw.items():
+        try:
+            channel_id = int(key)
+            server_id = int(value)
+        except (TypeError, ValueError):
+            continue
+        if channel_id > 0 and server_id > 0:
+            out[channel_id] = server_id
+    return out
 
 
 def parse_indices(text: str, count: int) -> list[int]:
@@ -701,6 +722,8 @@ def resolve_server_id(cfg: dict) -> int:
 def resolve_servers(cfg: dict) -> dict[int, str]:
     """All servers the watched channels may live in (single + multi mode)."""
     servers = normalize_watch(cfg.get("watch_servers"))
+    for server_id in normalize_channel_servers(cfg.get("channel_servers")).values():
+        servers.setdefault(server_id, "")
     server_id = resolve_server_id(cfg)
     if server_id:
         servers.setdefault(server_id, "")
@@ -719,8 +742,10 @@ def prompt_targets(cfg: dict, config_path: Path, logger: Logger) -> bool:
     # menu shows and edits one consistent list.
     watch = resolve_watch(cfg)
     servers = resolve_servers(cfg)
+    mapping = normalize_channel_servers(cfg.get("channel_servers"))
     cfg["watch_channels"] = {str(cid): name for cid, name in watch.items()}
     cfg["watch_servers"] = {str(sid): name for sid, name in servers.items()}
+    cfg["channel_servers"] = {str(cid): str(sid) for cid, sid in mapping.items()}
     cfg["server_id"] = ""
     cfg["channel_id"] = ""
 
@@ -732,7 +757,10 @@ def prompt_targets(cfg: dict, config_path: Path, logger: Logger) -> bool:
         print(f"  {len(entries)} channel(s) watched:")
         for index, (channel_id, friendly) in enumerate(entries.items(), 1):
             label = f"  {friendly}" if friendly else ""
-            print(f"    {index}) {channel_id}{label}")
+            server_id = cfg["channel_servers"].get(str(channel_id), "")
+            server_name = cfg["watch_servers"].get(str(server_id), "") if server_id else ""
+            where = f"  [{server_name or server_id}]" if server_id else ""
+            print(f"    {index}) {channel_id}{label}{where}")
 
     def add_target() -> None:
         print("\nAdd a channel - paste a channel link, or type the Server ID.")
@@ -766,6 +794,7 @@ def prompt_targets(cfg: dict, config_path: Path, logger: Logger) -> bool:
         cfg["watch_channels"][channel_id] = ""
         if server_id:
             cfg["watch_servers"].setdefault(server_id, "")
+            cfg["channel_servers"][channel_id] = server_id
         print(f"  Added channel {channel_id}.")
         if server_id:
             print(f"  Server {server_id}.")
@@ -790,6 +819,7 @@ def prompt_targets(cfg: dict, config_path: Path, logger: Logger) -> bool:
             return
         channel_id = entries[index - 1]
         del cfg["watch_channels"][channel_id]
+        cfg["channel_servers"].pop(channel_id, None)
         print(f"  Removed channel {channel_id}.")
 
     while True:
@@ -811,6 +841,8 @@ def prompt_targets(cfg: dict, config_path: Path, logger: Logger) -> bool:
             elif input("Remove all channels? [y/N]: ").strip().lower().startswith("y"):
                 cfg["watch_channels"] = {}
                 cfg["watch_servers"] = {}
+                cfg["channel_servers"] = {}
+                cfg["server_icons"] = {}
                 print("  Cleared the whole list.")
         elif choice in ("4", "d", "done", ""):
             if not cfg["watch_channels"]:

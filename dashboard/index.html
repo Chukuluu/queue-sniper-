@@ -206,11 +206,12 @@
             </div>
             <div class="server-list" id="serverList"></div>
             <form class="custom-form" id="customForm">
-              <input id="customName" type="text" placeholder="Server name" autocomplete="off" maxlength="40" />
+              <input id="customName" type="text" placeholder="Server name (optional)" autocomplete="off" maxlength="40" />
               <div class="custom-row">
-                <input id="customId" type="text" placeholder="Channel ID (optional)" autocomplete="off" maxlength="40" />
-                <button class="btn btn-outline" type="submit">ADD</button>
+                <input id="customServerId" type="text" inputmode="numeric" placeholder="Server ID" autocomplete="off" maxlength="22" />
+                <input id="customId" type="text" inputmode="numeric" placeholder="Channel ID or link" autocomplete="off" maxlength="120" />
               </div>
+              <button class="btn btn-primary btn-block" type="submit">ADD CHANNEL</button>
             </form>
             <button class="btn btn-primary btn-block save-btn" id="saveSettingsBtn">SAVE SETTINGS</button>
           </div>
