@@ -500,11 +500,11 @@
       avatar.style.setProperty("--av", server.avatar);
       avatar.textContent = server.initials;
       if (server.serverIcon) {
+        avatar.textContent = "";
         var icon = document.createElement("img");
         icon.src = server.serverIcon;
         icon.alt = "";
         icon.loading = "lazy";
-        icon.addEventListener("load", function () { avatar.textContent = ""; });
         icon.addEventListener("error", function () {
           icon.remove();
           avatar.textContent = server.initials;
