@@ -1,2 +1,3 @@
 discord.py-self @ https://github.com/dolfies/discord.py-self/archive/2ba64a9a997e151a9c259984e0a179b1fdf4aff4.zip
 orjson>=3.10.0
+pywebview>=6.2,<7

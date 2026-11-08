@@ -11,9 +11,11 @@ config.json.tmp
 .venv/
 logs/
 alarm.wav
+.webview/
 __pycache__/
 *.pyc
 build/
 *.spec
 QueueSniper.exe
+QueueSniperDashboard.exe
 *.exe

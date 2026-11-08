@@ -63,6 +63,24 @@
   color: var(--green);
 }
 
+.status-card.is-connecting .status-dot {
+  background: var(--amber);
+  box-shadow: 0 0 14px rgba(251, 191, 36, 0.6);
+}
+
+.status-card.is-connecting .status-label {
+  color: var(--amber);
+}
+
+.status-card.is-error .status-dot {
+  background: var(--red);
+  box-shadow: 0 0 14px rgba(248, 113, 113, 0.6);
+}
+
+.status-card.is-error .status-label {
+  color: var(--red);
+}
+
 .status-sub {
   margin: 0;
   color: var(--muted);
@@ -160,6 +178,11 @@
 .log-time {
   flex: 0 0 auto;
   color: var(--muted2);
+}
+
+.log-message {
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 .log-tag {

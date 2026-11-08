@@ -113,7 +113,7 @@
   </svg>
 
   <div class="window" id="appWindow">
-    <div class="titlebar">
+    <div class="titlebar pywebview-drag-region">
       <div class="traffic-lights">
         <button class="light red" id="redLight" title="Close" aria-label="Close"></button>
         <button class="light yellow" id="yellowLight" title="Minimize" aria-label="Minimize"></button>
@@ -298,12 +298,12 @@
           <div class="toggle-row">
             <span class="row-icon"><svg class="icon"><use href="#i-desktop" /></svg></span>
             <span class="row-label">Desktop Notifications<small>System popup when a queue opens</small></span>
-            <button class="switch on" role="switch" aria-checked="true" aria-label="Desktop Notifications"></button>
+            <button class="switch on" id="switchDesktop" role="switch" aria-checked="true" aria-label="Desktop Notifications"></button>
           </div>
           <div class="toggle-row">
             <span class="row-icon"><svg class="icon"><use href="#i-volume" /></svg></span>
             <span class="row-label">Sound Notifications<small>Play alarm on queue detection</small></span>
-            <button class="switch on" role="switch" aria-checked="true" aria-label="Sound Notifications"></button>
+            <button class="switch on" id="switchSound" role="switch" aria-checked="true" aria-label="Sound Notifications"></button>
           </div>
           <div class="volume-row" id="volumeRow">
             <svg class="icon" style="width:14px;height:14px;color:var(--muted)"><use href="#i-sound" /></svg>

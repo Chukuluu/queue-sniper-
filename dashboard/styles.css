@@ -700,3 +700,8 @@ a:focus-visible {
   filter: saturate(0.65);
   transition: opacity 0.15s ease;
 }
+
+.pywebview-drag-region {
+  cursor: default;
+  user-select: none;
+}

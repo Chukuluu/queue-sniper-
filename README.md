@@ -35,7 +35,11 @@ button** the instant the queue message appears. It then plays a loud alarm and
 
 ### The easy way (no Python needed)
 
-Double-click **`QueueSniper.exe`**.
+For the visual control panel, double-click **`QueueSniperDashboard.exe`** — see
+[Dashboard app](#dashboard-app-the-window). It opens the dashboard window and
+drives the sniper from there.
+
+To run the terminal version instead, double-click **`QueueSniper.exe`**.
 
 - On the first launch it asks for your **token**, then lets you add the **server ID
   and channel ID** of each waitlist channel, and whether to auto-click or only alarm.
@@ -84,21 +88,56 @@ That's it. Leave the window open. Press `Ctrl+C` to stop.
 
 ---
 
-## Dashboard UI
+## Dashboard app (the window)
 
-The dark control-panel mock-up lives in `dashboard/`. It is plain HTML/CSS/JS —
-no build step and no npm install.
+**`QueueSniperDashboard.exe`** is the recommended way to use the sniper. It opens
+the dark App Dashboard in its own native window and controls the real sniper —
+no terminal.
 
-Open **`dashboard/index.html`** in a browser (or double-click it) to explore the
-flow: start/stop, server selection, click modes, alerts, custom sounds, webhook
-setup and diagnostics.
+- Put `QueueSniperDashboard.exe` in the same folder as `config.json`, `.env` and
+  `alarm.wav`. Those files are resolved **next to the exe**.
+- Double-click it. Press **START** to connect and watch, **STOP** to disconnect.
+  Closing the window stops the sniper.
+- The activity log shows the real sniper output (`Logged in as …`, `Watching #…`,
+  `DETECTED`, `CLICKED` with timings).
+- The Watchlist shows the channels already in `config.json`. Toggle them and press
+  **SAVE SETTINGS** to rewrite `watch_channels`. Use **+ Custom** to add a channel
+  by link or ID.
+- **Click Mode** (Turbo / Patience / Safe / Smart) rewrites `retry_attempts`,
+  `retry_delay_ms` and `click_cooldown_seconds`, and applies live if the sniper is
+  already running.
+- **Diagnostics → RUN** checks the token, clock offset, gateway latency and
+  channel visibility (when started). **TEST WEBHOOK** posts a real message to the
+  Discord webhook URL.
+- Alerts volume, option A/B and notification toggles are saved in `config.json`
+  under `dashboard`. Custom sound uploads and desktop notifications are visual
+  only for now.
 
-> The dashboard is a UI prototype. It does **not** talk to the sniper yet —
-> pressing START only updates the mock state and activity log.
+The window uses **WebView2** (Edge). It ships with Windows 11 and current Windows
+10; if the window is blank, install the
+[WebView2 Runtime](https://developer.microsoft.com/microsoft-edge/webview2/).
 
 Keyboard: `Space` start/stop, `Ctrl+L` clear log, `Ctrl+D` run diagnostics,
-`Esc` close/reopen the mock window. It is designed for a desktop window; below
-920px wide it stacks into a single column.
+`Esc` close/reopen the mock window.
+
+### Running or rebuilding the dashboard
+
+Run it from source:
+
+```bat
+.venv\Scripts\python.exe dashboard_app.py
+```
+
+Rebuild the exe (installs PyInstaller + pywebview, bundles `dashboard/`):
+
+```bat
+build-dashboard.bat
+```
+
+`dashboard/` is plain HTML/CSS/JS — no build step and no npm install. Opening
+`dashboard/index.html` in a normal browser shows a **demo** of the same layout
+(START only changes the mock state); the real controls only work inside the
+desktop app.
 
 ---
 
@@ -394,22 +433,34 @@ also means moving the token to that machine.
 
 ## Building the .exe
 
-The exe is already built at `QueueSniper.exe`. To rebuild after editing
-`sniper.py`:
+To rebuild the terminal sniper after editing `sniper.py`:
 
 ```bat
 build.bat
 ```
 
 It installs PyInstaller into `.venv` and writes `QueueSniper.exe` into the
-project folder. Build junk goes to `build/` and can be deleted.
+project folder.
+
+To rebuild the dashboard window after editing `dashboard_app.py` or
+`dashboard/`:
+
+```bat
+build-dashboard.bat
+```
+
+That writes `QueueSniperDashboard.exe` and bundles the `dashboard/` files inside
+it. Build junk goes to `build/` and can be deleted. Both exes are git-ignored.
 
 ---
 
 ## Files
 
 ```
-QueueSniper.exe    standalone build - double-click to run
+QueueSniper.exe    standalone terminal build - double-click to run
+QueueSniperDashboard.exe  standalone dashboard window (recommended)
+dashboard_app.py   dashboard window backend (drives the real sniper)
+build-dashboard.bat  rebuilds QueueSniperDashboard.exe
 setup.bat          double-click to add/remove watched channels
 sniper.py          main program (source)
 config.json        your channels/patterns/alarm settings (local, git-ignored)
