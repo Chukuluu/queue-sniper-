@@ -450,7 +450,7 @@ class DashboardService:
             meta = {key: dict(value) for key, value in self._meta.items()}
 
         out: list[dict[str, Any]] = []
-        for channel_id, friendly in watch.items():
+        for channel_id in watch:
             key = str(channel_id)
             live = meta.get(channel_id, {})
 
@@ -461,26 +461,22 @@ class DashboardService:
 
             server_name = str(live.get("server_name") or names.get(server_id) or "").strip()
             server_icon = str(live.get("server_icon") or icons.get(server_id) or "").strip()
-            channel_name = str(
-                live.get("channel_name") or friendly or ""
-            ).strip()
 
-            name = channel_name or f"Channel {mask_id(key)}"
             server_label = server_name or (
                 f"Server {mask_id(str(server_id))}" if server_id else "Server not linked"
             )
             out.append(
                 {
                     "id": key,
-                    "name": name[:40],
+                    "name": server_label[:40],
                     "serverId": str(server_id) if server_id else "",
                     "serverName": server_label[:40],
                     "serverIcon": server_icon,
                     "tag": "WATCH",
                     "tagClass": "tag-green",
-                    "initials": initials_for(server_name or name),
+                    "initials": initials_for(server_label),
                     "avatar": avatar_for(str(server_id) if server_id else key),
-                    "meta": f"{server_label} · ID {mask_id(key)}",
+                    "meta": f"ID {mask_id(key)}",
                     "selected": True,
                     "custom": False,
                 }

@@ -638,7 +638,7 @@
 
     state.servers.push({
       id: channel,
-      name: "Channel ••••" + channel.slice(-4),
+      name: serverLabel,
       serverId: server,
       serverName: serverLabel,
       serverIcon: "",
@@ -646,7 +646,7 @@
       tagClass: "tag-green",
       initials: initials,
       avatar: "linear-gradient(135deg, #22c55e, #0ea5e9)",
-      meta: serverLabel + " · ID ••••" + channel.slice(-4),
+      meta: "ID ••••" + channel.slice(-4),
       selected: true,
       custom: true
     });

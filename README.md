@@ -100,8 +100,8 @@ no terminal.
   Closing the window stops the sniper.
 - The activity log shows the real sniper output (`Logged in as …`, `Watching #…`,
   `DETECTED`, `CLICKED` with timings).
-- The Watchlist shows every watched channel with its **server name and server
-  icon**, resolved automatically from Discord. Toggle channels and press
+- The Watchlist shows the **server name and server icon** for each watched channel
+  (the channel name is not shown on the card). Toggle channels and press
   **SAVE SETTINGS** to rewrite `watch_channels`.
 - **+ Custom** asks for the **Server ID** and the **Channel ID** (or a channel
   link, which supplies the server ID). Both are required so the card can show the
